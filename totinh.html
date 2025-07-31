@@ -1,0 +1,382 @@
+<!DOCTYPE html> 
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gửi đến người tớ yêu 💖</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0;
+      height: 100%;
+      background: url('Messenger_creation_FB59B8F0-D10F-4929-A219-5821DEEF0B18.jpg') no-repeat center center fixed;
+      background-size: cover;
+      background-position: center top;
+      overflow: hidden;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .container {
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .heart-img {
+      width: 150px;
+      margin: 10px auto;
+      display: block;
+    }
+
+    .message {
+      font-size: 20px;
+      margin: 15px 0;
+    }
+
+    .button {
+      padding: 12px 30px;
+      background: #ff3366;
+      border: none;
+      border-radius: 25px;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .button:hover {
+      background: #e02b59;
+    }
+
+    /* Nút bật/tắt nhạc */
+    #musicBtn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      z-index: 50;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 25px;
+      background: #ff3366;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    #musicBtn:hover {
+      background: #e02b59;
+    }
+
+    /* Hiệu ứng hạt rơi */
+    .sparkle {
+      position: fixed;
+      top: 0;
+      width: 4px;
+      height: 4px;
+      background: #ff6699;
+      border-radius: 50%;
+      opacity: 0.8;
+      animation-name: fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+    @keyframes fall {
+      0% { transform: translateY(-10px); opacity: 0.8; }
+      100% { transform: translateY(100vh); opacity: 0; }
+    }
+
+    /* Canvas pháo hoa */
+    #fireworksCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 20;
+      display: none;
+    }
+
+    /* Bông hồng */
+    #rose {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 200px;
+      display: none;
+      z-index: 30;
+      /* Mặc định không có animation */
+    }
+
+    /* Animation bông hồng hiện lên */
+    @keyframes roseAppear {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    #rose.show {
+      display: block;
+      animation: roseAppear 1s ease forwards;
+    }
+
+    /* Lời nhắn sau khi bắn pháo hoa */
+    #finalMessage {
+      position: fixed;
+      top: 70%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 28px;
+      color: #ff3366;
+      font-weight: bold;
+      display: none;
+      z-index: 40;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Nút bật/tắt nhạc -->
+  <button id="musicBtn">Bật nhạc 🎵</button>
+
+  <div class="overlay"></div>
+
+  <div class="container" id="mainContent">
+    <h1>Gửi đến người tớ yêu 💖</h1>
+    <img src="Messenger_creation_67661097-B5E8-46F0-ACB5-3CDE7174AD46.jpg" alt="bé Tiên cute" class="heart-img" />
+    <div class="message">
+      Cậu là người khiến tớ mỉm cười mỗi ngày,<br>
+      là lý do khiến trái tim tớ đập thình thịch mỗi đêm.<br>
+      Mình có món quà tặng cậu nè😉? 
+    </div>
+    <button class="button" onclick="startFireworks()">🎁</button>
+  </div>
+
+  <!-- Canvas pháo hoa -->
+  <canvas id="fireworksCanvas"></canvas>
+
+  <!-- Quà tặng cậu -->
+  <img id="rose" src="R (1).jpg" alt="quà tặng cậu" />
+
+  <!-- Lời nhắn -->
+  <div id="finalMessage">Cậu chính là món quà tuyệt nhất đấy, cô Tiên bé nhỏ của tớ ạ😘! ❤️</div>
+
+  <!-- Nhạc nền ẩn -->
+  <audio id="bgMusic" loop>
+    <source src="DoiTa-Keyo-6115147.mp3" type="audio/mpeg" />
+    Trình duyệt của bạn không hỗ trợ thẻ audio.
+  </audio>
+
+  <!-- Hiệu ứng hạt rơi -->
+  <script>
+    for (let i = 0; i < 100; i++) {
+      let s = document.createElement('div');
+      s.className = 'sparkle';
+      s.style.left = Math.random() * 100 + 'vw';
+      s.style.animationDuration = (2 + Math.random() * 3) + 's';
+      s.style.animationDelay = Math.random() * 5 + 's';
+      document.body.appendChild(s);
+    }
+  </script>
+
+  <!-- Mã bắn pháo hoa đơn giản -->
+  <script>
+    const canvas = document.getElementById('fireworksCanvas');
+    const ctx = canvas.getContext('2d');
+    let cw, ch;
+    let fireworks = [];
+    let particles = [];
+    let animationFrameId;
+    let running = false;
+
+    function resizeCanvas() {
+      cw = window.innerWidth;
+      ch = window.innerHeight;
+      canvas.width = cw;
+      canvas.height = ch;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Firework {
+      constructor(sx, sy, tx, ty) {
+        this.x = sx;
+        this.y = sy;
+        this.sx = sx;
+        this.sy = sy;
+        this.tx = tx;
+        this.ty = ty;
+        this.distanceToTarget = distance(sx, sy, tx, ty);
+        this.distanceTraveled = 0;
+        this.coordinates = [];
+        this.coordinateCount = 3;
+        while (this.coordinateCount--) {
+          this.coordinates.push([this.x, this.y]);
+        }
+        this.angle = Math.atan2(ty - sy, tx - sx);
+        this.speed = 4;
+        this.acceleration = 1.05;
+        this.brightness = random(50, 70);
+      }
+      update(index) {
+        this.coordinates.pop();
+        this.coordinates.unshift([this.x, this.y]);
+
+        this.speed *= this.acceleration;
+        let vx = Math.cos(this.angle) * this.speed;
+        let vy = Math.sin(this.angle) * this.speed;
+        this.distanceTraveled = distance(this.sx, this.sy, this.x + vx, this.y + vy);
+
+        if (this.distanceTraveled >= this.distanceToTarget) {
+          createParticles(this.tx, this.ty);
+          fireworks.splice(index, 1);
+        } else {
+          this.x += vx;
+          this.y += vy;
+        }
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+        ctx.lineTo(this.x, this.y);
+        ctx.strokeStyle = `hsl(${random(0, 360)}, 100%, ${this.brightness}%)`;
+        ctx.stroke();
+      }
+    }
+
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.coordinates = [];
+        this.coordinateCount = 5;
+        while (this.coordinateCount--) {
+          this.coordinates.push([this.x, this.y]);
+        }
+        this.angle = random(0, Math.PI * 2);
+        this.speed = random(1, 10);
+        this.friction = 0.95;
+        this.gravity = 1;
+        this.hue = random(0, 360);
+        this.brightness = random(50, 80);
+        this.alpha = 1;
+        this.decay = random(0.015, 0.03);
+      }
+      update(index) {
+        this.coordinates.pop();
+        this.coordinates.unshift([this.x, this.y]);
+        this.speed *= this.friction;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed + this.gravity;
+        this.alpha -= this.decay;
+
+        if (this.alpha <= 0) {
+          particles.splice(index, 1);
+        }
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.moveTo(this.coordinates[this.coordinates.length - 1][0], this.coordinates[this.coordinates.length - 1][1]);
+        ctx.lineTo(this.x, this.y);
+        ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`;
+        ctx.stroke();
+      }
+    }
+
+    function distance(x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function random(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function createParticles(x, y) {
+      let particleCount = 30;
+      while (particleCount--) {
+        particles.push(new Particle(x, y));
+      }
+    }
+
+    function loop() {
+      animationFrameId = requestAnimationFrame(loop);
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        fireworks[i].draw();
+        fireworks[i].update(i);
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].draw();
+        particles[i].update(i);
+      }
+
+      if (!running && fireworks.length === 0 && particles.length === 0) {
+        cancelAnimationFrame(animationFrameId);
+        const rose = document.getElementById('rose');
+        rose.classList.add('show');
+        document.getElementById('finalMessage').style.display = 'block';
+      }
+    }
+
+    function startFireworks() {
+      document.getElementById('mainContent').style.display = 'none';
+      canvas.style.display = 'block';
+      running = true;
+
+      let launchCount = 0;
+      let maxLaunch = 5;
+
+      const launchInterval = setInterval(() => {
+        if (launchCount >= maxLaunch) {
+          running = false;
+          clearInterval(launchInterval);
+          return;
+        }
+
+        const sx = cw / 2;
+        const sy = ch;
+        const tx = Math.random() * cw * 0.8 + cw * 0.1;
+        const ty = Math.random() * ch * 0.5 + ch * 0.1;
+
+        fireworks.push(new Firework(sx, sy, tx, ty));
+        launchCount++;
+      }, 400);
+
+      loop();
+    }
+
+    // Xử lý bật/tắt nhạc
+    const musicBtn = document.getElementById('musicBtn');
+    const bgMusic = document.getElementById('bgMusic');
+    let isPlaying = false;
+
+    musicBtn.addEventListener('click', () => {
+      if (!isPlaying) {
+        bgMusic.play();
+        musicBtn.textContent = 'Tắt nhạc 🔇';
+        isPlaying = true;
+      } else {
+        bgMusic.pause();
+        musicBtn.textContent = 'Bật nhạc 🎵';
+        isPlaying = false;
+      }
+    });
+  </script>
+
+</body>
+</html>
